@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../services/secure_storage_service.dart';
 import 'user_list_screen.dart';
+import 'post_list_screen.dart';
+import 'validation_screen.dart';
+import '../utils/logger.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -84,6 +87,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Logger.info('HomeScreen ditampilkan');
     return Scaffold(
       appBar: AppBar(
         title: const Text('Secure Storage & HTTP'),
@@ -246,6 +250,40 @@ class _HomeScreenState extends State<HomeScreen> {
                     ],
                   ),
                 ),
+              ),
+              const SizedBox(height: 12),
+
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const PostListScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.article),
+                  label: const Text('Lihat Daftar Post'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.deepPurple,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const ValidationScreen(),
+                    ),
+                  );
+                },
+                icon: const Icon(Icons.verified_user),
+                label: const Text('Uji Validasi'),
               ),
 
               const SizedBox(height: 16),

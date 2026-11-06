@@ -3,6 +3,9 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'config/app_config.dart';
 import 'screens/home_screen.dart';
+import 'config/dependency_injector.dart';
+import 'config/dependency_provider.dart';
+
 
 /// Entry point aplikasi.
 ///
@@ -15,7 +18,13 @@ Future<void> main() async {
   if (!AppConfig.isConfigured()) {
     print('⚠️ Konfigurasi .env tidak lengkap. Periksa file .env Anda.');
   }
-  runApp(const MyApp());
+  runApp(
+    DependencyProvider(
+      userRepository: DependencyInjector.userRepository,
+      postRepository: DependencyInjector.postRepository,
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {

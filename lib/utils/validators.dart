@@ -57,4 +57,51 @@ class Validators {
 
     return null;
   }
+
+  // Validasi nomor telepon
+  static String? validatePhone(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Nomor telepon tidak boleh kosong';
+    }
+
+    final phoneRegex = RegExp(r'^[0-9]{10,13}$');
+
+    if (!phoneRegex.hasMatch(value)) {
+      return 'Nomor telepon harus berupa angka dengan panjang 10-13 digit';
+    }
+
+    return null;
+  }
+
+  // Validasi URL
+  static String? validateUrl(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'URL tidak boleh kosong';
+    }
+
+    final urlRegex = RegExp(r'^https?://.+', caseSensitive: false);
+
+    if (!urlRegex.hasMatch(value)) {
+      return 'URL harus dimulai dengan http:// atau https://';
+    }
+
+    return null;
+  }
+
+  // Validasi password
+  static String? validatePassword(String? value) {
+    if (value == null || value.isEmpty) {
+      return 'Password tidak boleh kosong';
+    }
+
+    final passwordRegex = RegExp(
+      r'^(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*(),.?":{}|<>_\-+=\[\]\\\/]).{8,}$',
+    );
+
+    if (!passwordRegex.hasMatch(value)) {
+      return 'Password minimal 8 karakter, mengandung huruf kapital, angka, dan simbol';
+    }
+
+    return null;
+  }
 }

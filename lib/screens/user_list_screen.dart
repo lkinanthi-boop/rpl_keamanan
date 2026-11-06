@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/user.dart';
 import '../services/api_service.dart';
 import '../widgets/user_card.dart';
+import '../config/dependency_provider.dart';
 
 class UserListScreen extends StatefulWidget {
   const UserListScreen({super.key});
@@ -12,7 +13,6 @@ class UserListScreen extends StatefulWidget {
 }
 
 class _UserListScreenState extends State<UserListScreen> {
-  final ApiService _apiService = ApiService();
   final TextEditingController _searchController = TextEditingController();
 
   List<User> _users = [];
@@ -40,7 +40,9 @@ class _UserListScreenState extends State<UserListScreen> {
     });
 
     try {
-      final users = await _apiService.getUsers();
+      final userRepository = DependencyProvider.of(context).userRepository;
+
+      final users = await userRepository.getUsers();
 
       setState(() {
         _users = users;
