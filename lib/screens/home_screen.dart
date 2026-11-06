@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/secure_storage_service.dart';
-import '../services/api_service.dart';
 import 'user_list_screen.dart';
-import 'post_list_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -15,15 +13,9 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final SecureStorageService _storageService = SecureStorageService();
   final TextEditingController _tokenController = TextEditingController();
-  final ApiService _apiService = ApiService();
-
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
 
   String? _savedToken;
   bool _hasToken = false;
-  bool _isLoggingIn = false;
-  bool _isLoggedIn = false;
 
   @override
   void initState() {
@@ -34,8 +26,6 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void dispose() {
     _tokenController.dispose();
-    _emailController.dispose();
-    _passwordController.dispose();
     super.dispose();
   }
 
@@ -52,7 +42,9 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<void> _saveToken() async {
-    if (_tokenController.text.trim().isEmpty) {
+    final token = _tokenController.text.trim();
+
+    if (token.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Token tidak boleh kosong'),
@@ -62,126 +54,29 @@ class _HomeScreenState extends State<HomeScreen> {
       return;
     }
 
-    await _storageService.saveToken(_tokenController.text.trim());
+    await _storageService.saveToken(token);
     _tokenController.clear();
     await _checkToken();
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Token berhasil disimpan di secure storage'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Token berhasil disimpan di secure storage'),
+        backgroundColor: Colors.green,
+      ),
+    );
   }
 
   Future<void> _deleteToken() async {
     await _storageService.deleteToken();
     await _checkToken();
 
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Token berhasil dihapus'),
-          backgroundColor: Colors.orange,
-        ),
-      );
-    }
-  }
-
-  Future<void> _login() async {
-    final email = _emailController.text.trim();
-    final password = _passwordController.text;
-
-    if (email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Email dan password tidak boleh kosong'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoggingIn = true;
-    });
-
-    try {
-      final token = await _apiService.login(email, password);
-
-      await _storageService.saveToken(token);
-      await _checkToken();
-
-      if (mounted) {
-        setState(() {
-          _isLoggedIn = true;
-          _isLoggingIn = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login berhasil! Token telah disimpan.'),
-            backgroundColor: Colors.green,
-          ),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          _isLoggingIn = false;
-          _isLoggedIn = false;
-        });
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Login gagal: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
-    }
-  }
-
-  Future<void> _logout() async {
-    final confirm = await showDialog<bool>(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Konfirmasi Logout'),
-          content: const Text('Apakah kamu yakin ingin logout?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Batal'),
-            ),
-            ElevatedButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Logout'),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (confirm != true) return;
-
-    await _storageService.deleteToken();
-
     if (!mounted) return;
-
-    setState(() {
-      _isLoggedIn = false;
-      _hasToken = false;
-      _savedToken = null;
-      _emailController.clear();
-      _passwordController.clear();
-    });
 
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
-        content: Text('Logout berhasil'),
+        content: Text('Token berhasil dihapus'),
         backgroundColor: Colors.orange,
       ),
     );
@@ -194,14 +89,6 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text('Secure Storage & HTTP'),
         backgroundColor: Colors.deepPurple,
         foregroundColor: Colors.white,
-        actions: [
-          if (_isLoggedIn)
-            IconButton(
-              onPressed: _logout,
-              icon: const Icon(Icons.logout),
-              tooltip: 'Logout',
-            ),
-        ],
       ),
       body: SingleChildScrollView(
         child: Padding(
@@ -209,110 +96,6 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Section Login
-              Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Row(
-                        children: [
-                          Icon(Icons.login, color: Colors.deepPurple),
-                          SizedBox(width: 8),
-                          Text(
-                            'Login dengan Token',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _emailController,
-                        keyboardType: TextInputType.emailAddress,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          prefixIcon: Icon(Icons.email),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      TextField(
-                        controller: _passwordController,
-                        obscureText: true,
-                        decoration: const InputDecoration(
-                          labelText: 'Password',
-                          prefixIcon: Icon(Icons.lock),
-                          border: OutlineInputBorder(),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: _isLoggingIn ? null : _login,
-                          icon: _isLoggingIn
-                              ? const SizedBox(
-                                  width: 18,
-                                  height: 18,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                  ),
-                                )
-                              : const Icon(Icons.login),
-                          label: Text(
-                            _isLoggingIn ? 'Sedang Login...' : 'Login',
-                          ),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.deepPurple,
-                            foregroundColor: Colors.white,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: _isLoggedIn
-                              ? Colors.green[50]
-                              : Colors.orange[50],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Icon(
-                              _isLoggedIn
-                                  ? Icons.check_circle
-                                  : Icons.info_outline,
-                              color: _isLoggedIn ? Colors.green : Colors.orange,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                _isLoggedIn
-                                    ? 'Status: Berhasil Login'
-                                    : 'Status: Belum Login',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: _isLoggedIn
-                                      ? Colors.green[800]
-                                      : Colors.orange[800],
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
               // Section Secure Storage
               Card(
                 child: Padding(
@@ -434,12 +217,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       const SizedBox(height: 8),
                       const Text(
-                        'Ambil data dari REST API (JSONPlaceholder) menggunakan GET request.',
+                        'Ambil data dari REST API (JSONPlaceholder) '
+                        'menggunakan GET request.',
                         style: TextStyle(fontSize: 12, color: Colors.grey),
                       ),
                       const SizedBox(height: 16),
-
-                      // Tombol Daftar Pengguna
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton.icon(
@@ -460,30 +242,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 12),
-
-                      // Tombol Daftar Posts - Latihan 3
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const PostListScreen(),
-                              ),
-                            );
-                          },
-                          icon: const Icon(Icons.article),
-                          label: const Text('Lihat Daftar Posts'),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.teal,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),
