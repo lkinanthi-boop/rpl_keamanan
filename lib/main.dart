@@ -5,7 +5,7 @@ import 'config/app_config.dart';
 import 'screens/home_screen.dart';
 import 'config/dependency_injector.dart';
 import 'config/dependency_provider.dart';
-
+import '../utils/logger.dart';
 
 /// Entry point aplikasi.
 ///
@@ -16,7 +16,7 @@ Future<void> main() async {
   await dotenv.load(fileName: ".env");
   // Periksa konfigurasi
   if (!AppConfig.isConfigured()) {
-    print('⚠️ Konfigurasi .env tidak lengkap. Periksa file .env Anda.');
+    Logger.info('Aplikasi dimulai');
   }
   runApp(
     DependencyProvider(

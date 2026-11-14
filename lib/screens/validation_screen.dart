@@ -1,102 +1,145 @@
 import 'package:flutter/material.dart';
-
 import '../utils/validators.dart';
 
-class ValidationScreen extends StatefulWidget {
-  const ValidationScreen({super.key});
 
-  @override
-  State<ValidationScreen> createState() => _ValidationScreenState();
+class ValidationScreen extends StatefulWidget {
+const ValidationScreen({super.key});
+
+@override
+State<ValidationScreen> createState() => _ValidationScreenState();
 }
 
 class _ValidationScreenState extends State<ValidationScreen> {
-  final _formKey = GlobalKey<FormState>();
+final _formKey = GlobalKey<FormState>();
 
-  final _phoneController = TextEditingController();
-  final _urlController = TextEditingController();
-  final _passwordController = TextEditingController();
+final _nameController = TextEditingController();
+final _emailController = TextEditingController();
+final _phoneController = TextEditingController();
+final _urlController = TextEditingController();
+final _passwordController = TextEditingController();
 
-  @override
-  void dispose() {
-    _phoneController.dispose();
-    _urlController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
+String _result = '';
 
-  void _validateForm() {
-    if (_formKey.currentState!.validate()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Semua input berhasil divalidasi')),
-      );
-    }
-  }
+@override
+void dispose() {
+_nameController.dispose();
+_emailController.dispose();
+_phoneController.dispose();
+_urlController.dispose();
+_passwordController.dispose();
+super.dispose();
+}
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Pengujian Validasi')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'Validasi Nomor Telepon, URL, dan Password',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+void _submitForm() {
+if (_formKey.currentState!.validate()) {
+// Membersihkan input sebelum diproses.
+final name = Validators.sanitize(_nameController.text);
+final email = Validators.sanitize(_emailController.text);
+final phone = Validators.sanitize(_phoneController.text);
+final url = Validators.sanitize(_urlController.text);
 
-              const SizedBox(height: 16),
+setState(() {
+_result = '''
+Validasi berhasil!
 
-              TextFormField(
-                controller: _phoneController,
-                decoration: const InputDecoration(
-                  labelText: 'Nomor Telepon',
-                  hintText: 'Contoh: 081234567890',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.phone,
-                validator: Validators.validatePhone,
-              ),
+Nama: $name
+Email: $email
+Nomor Telepon: $phone
+URL: $url
+Password: Berhasil divalidasi
+''';
+});
+} else {
+setState(() {
+_result = 'Terdapat input yang belum valid. Periksa kembali!';
+});
+}
+}
 
-              const SizedBox(height: 16),
+@override
+Widget build(BuildContext context) {
+return Scaffold(
+appBar: AppBar(
+title: const Text('Validasi Input'),
+),
+body: SingleChildScrollView(
+padding: const EdgeInsets.all(16),
+child: Form(
+key: _formKey,
+child: Column(
+crossAxisAlignment: CrossAxisAlignment.stretch,
+children: [
+TextFormField(
+controller: _nameController,
+decoration: const InputDecoration(
+labelText: 'Nama',
+border: OutlineInputBorder(),
+),
+validator: Validators.validateName,
+),
+const SizedBox(height: 16),
 
-              TextFormField(
-                controller: _urlController,
-                decoration: const InputDecoration(
-                  labelText: 'URL',
-                  hintText: 'Contoh: https://example.com',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.url,
-                validator: Validators.validateUrl,
-              ),
+TextFormField(
+controller: _emailController,
+keyboardType: TextInputType.emailAddress,
+decoration: const InputDecoration(
+labelText: 'Email',
+border: OutlineInputBorder(),
+),
+validator: Validators.validateEmail,
+),
+const SizedBox(height: 16),
 
-              const SizedBox(height: 16),
+TextFormField(
+controller: _phoneController,
+keyboardType: TextInputType.phone,
+decoration: const InputDecoration(
+labelText: 'Nomor Telepon',
+border: OutlineInputBorder(),
+),
+validator: Validators.validatePhone,
+),
+const SizedBox(height: 16),
 
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(
-                  labelText: 'Password',
-                  hintText: 'Contoh: Belajar123!',
-                  border: OutlineInputBorder(),
-                ),
-                obscureText: true,
-                validator: Validators.validatePassword,
-              ),
+TextFormField(
+controller: _urlController,
+keyboardType: TextInputType.url,
+decoration: const InputDecoration(
+labelText: 'URL',
+hintText: 'https://example.com',
+border: OutlineInputBorder(),
+),
+validator: Validators.validateUrl,
+),
+const SizedBox(height: 16),
 
-              const SizedBox(height: 24),
+TextFormField(
+controller: _passwordController,
+obscureText: true,
+decoration: const InputDecoration(
+labelText: 'Password',
+border: OutlineInputBorder(),
+),
+validator: Validators.validatePassword,
+),
+const SizedBox(height: 20),
 
-              ElevatedButton(
-                onPressed: _validateForm,
-                child: const Text('Validasi Input'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
+ElevatedButton(
+onPressed: _submitForm,
+child: const Text('Validasi Data'),
+),
+
+if (_result.isNotEmpty) ...[
+const SizedBox(height: 20),
+Text(
+_result,
+style: const TextStyle(fontSize: 14),
+),
+],
+],
+),
+),
+),
+);
+}
 }

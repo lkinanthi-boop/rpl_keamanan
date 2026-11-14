@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import '../config/app_config.dart';
 import '../models/user.dart';
 import '../models/post.dart';
-
+import '../utils/logger.dart';
 
 /// Service untuk komunikasi HTTP dengan REST API.
 ///
@@ -16,21 +16,22 @@ import '../models/post.dart';
 class ApiService {
   final http.Client _client;
   final String _baseUrl;
+
   ApiService({http.Client? client, String? baseUrl})
     : _client = client ?? http.Client(),
       _baseUrl = baseUrl ?? AppConfig.baseUrl;
 
   /// Mengambil daftar pengguna dari API.
-  ///
-  /// Mengembalikan [List<User>] jika berhasil.
-  /// Melempar [Exception] dengan pesan yang ramah pengguna jika gagal.
   Future<List<User>> getUsers() async {
     try {
       _logRequest('GET', '/users');
+
       final response = await _client
           .get(Uri.parse('$_baseUrl/users'), headers: _buildHeaders())
           .timeout(Duration(seconds: AppConfig.timeoutSeconds));
+
       _logResponse(response.statusCode);
+
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
         return data.map((json) => User.fromJson(json)).toList();
@@ -44,18 +45,24 @@ class ApiService {
     } on FormatException {
       throw Exception('Format data tidak valid.');
     } catch (e) {
-      throw Exception('Terjadi kesalahan: $e');
+      Logger.error('API Error di getUsers: $e');
+      throw Exception(
+        'Terjadi kesalahan pada sistem. Silakan coba lagi nanti.',
+      );
     }
   }
 
-  /// Mengambil pengguna berdasarkan [id].
+  /// Mengambil pengguna berdasarkan ID.
   Future<User> getUserById(int id) async {
     try {
       _logRequest('GET', '/users/$id');
+
       final response = await _client
           .get(Uri.parse('$_baseUrl/users/$id'), headers: _buildHeaders())
           .timeout(Duration(seconds: AppConfig.timeoutSeconds));
+
       _logResponse(response.statusCode);
+
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
         return User.fromJson(data);
@@ -66,8 +73,13 @@ class ApiService {
       throw Exception('Request timeout. Periksa koneksi internet Anda.');
     } on SocketException {
       throw Exception('Tidak ada koneksi internet. Periksa jaringan Anda.');
+    } on FormatException {
+      throw Exception('Format data tidak valid.');
     } catch (e) {
-      throw Exception('Terjadi kesalahan: $e');
+      Logger.error('API Error di getUserById: $e');
+      throw Exception(
+        'Terjadi kesalahan pada sistem. Silakan coba lagi nanti.',
+      );
     }
   }
 
@@ -84,7 +96,6 @@ class ApiService {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = jsonDecode(response.body);
-
         return data.map((json) => Post.fromJson(json)).toList();
       } else {
         throw Exception(
@@ -98,28 +109,31 @@ class ApiService {
     } on FormatException {
       throw Exception('Format data post tidak valid.');
     } catch (e) {
-      throw Exception('Terjadi kesalahan: $e');
+      Logger.error('API Error di getPosts: $e');
+      throw Exception(
+        'Terjadi kesalahan pada sistem. Silakan coba lagi nanti.',
+      );
     }
   }
 
   /// Membangun header untuk request HTTP.
   ///
-  /// Menyertakan API key dari konfigurasi (tidak di-hardcode).
+  /// API key diambil dari konfigurasi AppConfig.
   Map<String, String> _buildHeaders() {
     return {'Content-Type': 'application/json', 'X-API-Key': AppConfig.apiKey};
   }
 
-  /// Logging request yang aman (tidak mencetak token/API key).
+  /// Logging request tanpa mencetak API key.
   void _logRequest(String method, String endpoint) {
-    print('[$method] $endpoint');
+    Logger.info('[$method] $endpoint');
   }
 
-  /// Logging response yang aman (hanya status code).
+  /// Logging response hanya menampilkan status code.
   void _logResponse(int statusCode) {
-    print('Response status: $statusCode');
+    Logger.info('Response status: $statusCode');
   }
 
-  /// Menutup client.
+  /// Menutup client HTTP.
   void dispose() {
     _client.close();
   }

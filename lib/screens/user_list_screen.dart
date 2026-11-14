@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../models/user.dart';
-import '../services/api_service.dart';
 import '../widgets/user_card.dart';
 import '../config/dependency_provider.dart';
 
